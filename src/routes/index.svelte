@@ -15,7 +15,7 @@
 </template>
 
 <script lang="ts">
-	import pronouncing from 'pronouncing/build/pronouncing-browser'
+	import pronouncing from 'pronouncing/build/pronouncing-browser.js'
 
 	console.log(pronouncing)
 	interface HaikuLine {
