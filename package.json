@@ -30,6 +30,7 @@
   },
   "type": "module",
   "dependencies": {
-    "pronouncing": "aparrish/pronouncingjs"
+    "pronouncing": "aparrish/pronouncingjs",
+    "rxjs": "^7.5.5"
   }
 }
