@@ -12,7 +12,7 @@
 		<Window title="Validation Results">
 				{#if displayResults}
 					<ol>
-						{#each lines as line}
+						{#each haikuLines as line}
 							<li>
 								<p>Evaluation: {line.text} - valid: {line.valid}</p>
 								<p>Syllables: {line.syllableCount.join(', ')}</p>
@@ -36,7 +36,7 @@
 
 <script lang="ts">
 	import Window from '../components/Window.svelte'
-	import {from} from 'rxjs'
+	import {from, map, filter, bufferCount} from 'rxjs'
 	// todo: add types
 	import pronouncing from 'pronouncing/build/pronouncing-browser.js'
 
@@ -59,7 +59,8 @@
 	// textarea input
 	let haiku = '';
 
-	let lines = [haikuLineFactory(), haikuLineFactory(7), haikuLineFactory()]
+	let lines = from([haikuLineFactory(), haikuLineFactory(7), haikuLineFactory()])
+	let haikuLines: HaikuLine[] = []
 
 	let displayResults = false
 	let isValidHaiku = false
@@ -76,23 +77,28 @@
 			.map(getSyllableCountForWord)
 	}
 
+	function getHaiku(): string[] {
+		const EXPECTED_LINES = 3
+		const splitHaiku = haiku.split('\n').filter(Boolean)
+		const diffInLines = EXPECTED_LINES - splitHaiku.length
+		splitHaiku.push(...Array.from({length: diffInLines}, () => ''))
+		return splitHaiku
+	}
+
 
 	function recalculateValidity() {
-		haiku
-			.split('\n')
-			.filter(Boolean)
-			.forEach((line, idx) => lines[idx].text = line)
-
-		lines.forEach(line => {
-			const syllables = syllableCount(line.text)
-			line.valid = syllables.length === line.syllables
-			line.syllableCount = syllables
-		})
-
-		lines = lines
-
-		displayResults = lines.reduce((acc: boolean, cur) => !!cur.text && acc, true)
-		isValidHaiku = lines.reduce((acc: boolean, cur) => cur.valid && acc, true)
+		lines
+			.pipe(
+				map((line, idx) => ({...line, text: getHaiku()[idx]})),
+				map(line => ({...line, syllableCount: syllableCount(line.text)})),
+				map(line => ({...line, valid: line.syllableCount.length === line.syllables})),
+				bufferCount(3),
+			)
+			.subscribe(processedLines => {
+				displayResults = processedLines.reduce((acc: boolean, cur) => !!cur.text && acc, true)
+				isValidHaiku = processedLines.reduce((acc: boolean, cur) => cur.valid && acc, true)
+				haikuLines = processedLines
+			})
 	}
 
 	$: haiku, recalculateValidity()
