@@ -1,5 +1,5 @@
 <template>
-	<section class="haiku-input" style="width: 400px">
+	<section class="haiku-input" style="width: 300px">
 		<div class="window">
 			<div class="title-bar">
 				<div class="title-bar-text">Haiku Validator</div>
